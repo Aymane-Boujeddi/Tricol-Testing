@@ -103,11 +103,11 @@ public class StockServiceImpl implements StockService {
     }
 
     @Override
-    public String valorisationStock() {
+    public double valorisationStock() {
        double totalValeurStock =  findAllStock().stream()
                .mapToDouble(stock -> stock.getQuantiteActuel() * stock.getPrixAchat())
                .sum();
-        return "La valorisation du Stock : " + totalValeurStock;
+        return totalValeurStock;
     }
 
     private List<Stock> findAllStock(){

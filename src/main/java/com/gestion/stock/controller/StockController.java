@@ -51,7 +51,7 @@ public class StockController {
     }
 
     @GetMapping("/valorisation")
-    public ResponseEntity<String> valorisationStock(){
+    public ResponseEntity<Double> valorisationStock(){
         return ResponseEntity.ok(stockService.valorisationStock());
     }
 

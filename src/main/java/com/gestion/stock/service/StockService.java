@@ -17,5 +17,5 @@ public interface StockService {
     public List<MouvementStockResponseDTO> historiqueMouvement();
     public List<MouvementStockResponseDTO> historiqueMouvementStockProduit(Long id);
     public List<ProduitResponseDTO> produitUnderThreshold();
-    public String valorisationStock();
+    public double valorisationStock();
 }
