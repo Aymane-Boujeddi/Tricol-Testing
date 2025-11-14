@@ -6,6 +6,7 @@ import com.gestion.stock.repository.BonSortieRepository;
 import com.gestion.stock.repository.MouvementStockRepository;
 import com.gestion.stock.repository.ProduitRepository;
 import com.gestion.stock.repository.StockRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -30,35 +31,41 @@ import static org.mockito.Mockito.*;
 public class BonSortieServiceImplTest {
 
     @Mock
-    private  BonSortieRepository bonSortieRepository;
-
+    private BonSortieRepository bonSortieRepository;
     @Mock
-    private  ProduitRepository produitRepository;
+    private ProduitRepository produitRepository;
     @Mock
-    private  MouvementStockRepository mouvementStockRepository;
-
+    private MouvementStockRepository mouvementStockRepository;
     @Mock
-    private  StockRepository stockRepository;
-
-
-
+    private StockRepository stockRepository;
     @Mock
-    private  StockToMouvementMapper stockToMouvementMapper;
-
-
+    private StockToMouvementMapper stockToMouvementMapper;
 
     @InjectMocks
     private BonSortieServiceImpl bonSortieService;
 
+    private Long bonSortieId;
+    private Produit produit;
+    private MouvementStock mockMouvement;
+
+    @BeforeEach
+    void setUp() {
+        bonSortieId = 1L;
+        
+        produit = new Produit();
+        produit.setId(1L);
+        produit.setStockActuel(40);
+
+        mockMouvement = new MouvementStock();
+        
+        when(produitRepository.findById(1L)).thenReturn(Optional.of(produit));
+        when(stockToMouvementMapper.toMouvementSortie(any())).thenReturn(mockMouvement);
+    }
 
     @Test
     void updateBonSortieToValide_WithOneProduit(){
-        Long bonSortieId = 1L;
-
-        Produit produit = new Produit();
-        produit.setId(1L);
         produit.setStockActuel(20);
-
+        
         BonSortieItem item = new BonSortieItem();
         item.setQuantite(10);
         item.setProduit(produit);
@@ -73,12 +80,8 @@ public class BonSortieServiceImplTest {
         stock.setProduit(produit);
         stock.setDateEntre(LocalDateTime.now());
 
-
         when(bonSortieRepository.findById(bonSortieId)).thenReturn(Optional.of(bonSortie));
         when(stockRepository.findAll()).thenReturn(List.of(stock));
-        when(produitRepository.findById(1L)).thenReturn(Optional.of(produit));
-        when(stockToMouvementMapper.toMouvementSortie(any())).thenReturn(new MouvementStock());
-
 
         Map<String , Object> result = bonSortieService.updateBonSortieToValider(bonSortieId);
 
@@ -92,14 +95,6 @@ public class BonSortieServiceImplTest {
 
     @Test
     void updateBonSortieToValide_WithManyProduit() {
-
-
-        Long bonSortieId = 1L;
-
-        Produit produit = new Produit();
-        produit.setId(1L);
-        produit.setStockActuel(40);
-
         Stock stock1 = new Stock();
         stock1.setNumeroLot("Lot-001");
         stock1.setQuantiteActuel(20);
@@ -125,9 +120,6 @@ public class BonSortieServiceImplTest {
 
         when(bonSortieRepository.findById(bonSortieId)).thenReturn(Optional.of(bonSortie));
         when(stockRepository.findAll()).thenReturn(Arrays.asList(stock1, stock2));
-        when(produitRepository.findById(1L)).thenReturn(Optional.of(produit));
-        when(stockToMouvementMapper.toMouvementSortie(any())).thenReturn(new MouvementStock());
-
 
         Map<String, Object> result = bonSortieService.updateBonSortieToValider(bonSortieId);
 
@@ -139,19 +131,10 @@ public class BonSortieServiceImplTest {
         verify(bonSortieRepository).save(bonSortie);
         verify(stockRepository,times(2)).save(any(Stock.class));
         verify(mouvementStockRepository, times(2)).save(any(MouvementStock.class));
-
-
-
     }
 
     @Test
     void updateBonSortieToValide_WithInsufficientStock_ThrowsException(){
-        Long bonSortieId = 1L;
-
-        Produit produit = new Produit();
-        produit.setId(1L);
-        produit.setStockActuel(40);
-
         Stock stock1 = new Stock();
         stock1.setNumeroLot("Lot-001");
         stock1.setQuantiteActuel(20);
@@ -178,21 +161,13 @@ public class BonSortieServiceImplTest {
         when(bonSortieRepository.findById(bonSortieId)).thenReturn(Optional.of(bonSortie));
         when(stockRepository.findAll()).thenReturn(Arrays.asList(stock1, stock2));
 
-
         assertThatThrownBy(() -> bonSortieService.updateBonSortieToValider(bonSortieId))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Insufficient stock for product: 1");
     }
 
-
     @Test
     void updateBonSortieToValide_WithSortieQuantiteEqualsStockQuantite(){
-        Long bonSortieId = 1L;
-
-        Produit produit = new Produit();
-        produit.setId(1L);
-        produit.setStockActuel(40);
-
         Stock stock1 = new Stock();
         stock1.setNumeroLot("Lot-001");
         stock1.setQuantiteActuel(20);
@@ -218,9 +193,6 @@ public class BonSortieServiceImplTest {
 
         when(bonSortieRepository.findById(bonSortieId)).thenReturn(Optional.of(bonSortie));
         when(stockRepository.findAll()).thenReturn(Arrays.asList(stock1, stock2));
-        when(produitRepository.findById(1L)).thenReturn(Optional.of(produit));
-        when(stockToMouvementMapper.toMouvementSortie(any())).thenReturn(new MouvementStock());
-
 
         Map<String, Object> result = bonSortieService.updateBonSortieToValider(bonSortieId);
 
@@ -232,17 +204,11 @@ public class BonSortieServiceImplTest {
         verify(bonSortieRepository).save(bonSortie);
         verify(stockRepository,times(2)).save(any(Stock.class));
         verify(mouvementStockRepository, times(2)).save(any(MouvementStock.class));
-
-
     }
 
     @Test
     void updateBonSortieToValider_ValidationWorkflow_ShouldTriggerAllAutomaticActions() {
-        Long bonSortieId = 1L;
         LocalDateTime beforeValidation = LocalDateTime.now().minusMinutes(1);
-
-        Produit produit = new Produit();
-        produit.setId(1L);
         produit.setStockActuel(50);
 
         BonSortieItem item = new BonSortieItem();
@@ -260,67 +226,20 @@ public class BonSortieServiceImplTest {
         stock.setProduit(produit);
         stock.setDateEntre(LocalDateTime.now().minusDays(1));
 
-        MouvementStock mockMouvement = new MouvementStock();
-        mockMouvement.setQuantite(15);
-        mockMouvement.setDateMouvement(LocalDateTime.now());
-
         when(bonSortieRepository.findById(bonSortieId)).thenReturn(Optional.of(bonSortie));
         when(stockRepository.findAll()).thenReturn(List.of(stock));
-        when(produitRepository.findById(1L)).thenReturn(Optional.of(produit));
-        when(stockToMouvementMapper.toMouvementSortie(any())).thenReturn(mockMouvement);
 
         Map<String, Object> result = bonSortieService.updateBonSortieToValider(bonSortieId);
 
-
         assertThat(bonSortie.getStatut()).isEqualTo(StatutBonSortie.VALIDE);
         assertThat(result.get("status")).isEqualTo("VALIDE");
-
+        assertThat(stock.getQuantiteActuel()).isEqualTo(10);
+        assertThat(produit.getStockActuel()).isEqualTo(35);
+        
         verify(mouvementStockRepository).save(any(MouvementStock.class));
         verify(stockToMouvementMapper).toMouvementSortie(stock);
-
-        assertThat(stock.getQuantiteActuel()).isEqualTo(10);
         verify(stockRepository).save(stock);
-
-        assertThat(produit.getStockActuel()).isEqualTo(35);
         verify(produitRepository).save(produit);
-
         verify(bonSortieRepository).save(bonSortie);
-
-        verify(bonSortieRepository).findById(bonSortieId);
-        verify(stockRepository).findAll();
-        verify(produitRepository).findById(1L);
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
