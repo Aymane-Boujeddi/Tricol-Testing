@@ -236,6 +236,62 @@ public class BonSortieServiceImplTest {
 
     }
 
+    @Test
+    void updateBonSortieToValider_ValidationWorkflow_ShouldTriggerAllAutomaticActions() {
+        Long bonSortieId = 1L;
+        LocalDateTime beforeValidation = LocalDateTime.now().minusMinutes(1);
+
+        Produit produit = new Produit();
+        produit.setId(1L);
+        produit.setStockActuel(50);
+
+        BonSortieItem item = new BonSortieItem();
+        item.setQuantite(15);
+        item.setProduit(produit);
+
+        BonSortie bonSortie = new BonSortie();
+        bonSortie.setId(bonSortieId);
+        bonSortie.setStatut(StatutBonSortie.BROUILLON);
+        bonSortie.setItems(List.of(item));
+        bonSortie.setDateSortie(beforeValidation);
+
+        Stock stock = new Stock();
+        stock.setQuantiteActuel(25);
+        stock.setProduit(produit);
+        stock.setDateEntre(LocalDateTime.now().minusDays(1));
+
+        MouvementStock mockMouvement = new MouvementStock();
+        mockMouvement.setQuantite(15);
+        mockMouvement.setDateMouvement(LocalDateTime.now());
+
+        when(bonSortieRepository.findById(bonSortieId)).thenReturn(Optional.of(bonSortie));
+        when(stockRepository.findAll()).thenReturn(List.of(stock));
+        when(produitRepository.findById(1L)).thenReturn(Optional.of(produit));
+        when(stockToMouvementMapper.toMouvementSortie(any())).thenReturn(mockMouvement);
+
+        Map<String, Object> result = bonSortieService.updateBonSortieToValider(bonSortieId);
+
+
+        assertThat(bonSortie.getStatut()).isEqualTo(StatutBonSortie.VALIDE);
+        assertThat(result.get("status")).isEqualTo("VALIDE");
+
+        verify(mouvementStockRepository).save(any(MouvementStock.class));
+        verify(stockToMouvementMapper).toMouvementSortie(stock);
+
+        assertThat(stock.getQuantiteActuel()).isEqualTo(10);
+        verify(stockRepository).save(stock);
+
+        assertThat(produit.getStockActuel()).isEqualTo(35);
+        verify(produitRepository).save(produit);
+
+        verify(bonSortieRepository).save(bonSortie);
+
+        verify(bonSortieRepository).findById(bonSortieId);
+        verify(stockRepository).findAll();
+        verify(produitRepository).findById(1L);
+    }
+
+
 
 
 
