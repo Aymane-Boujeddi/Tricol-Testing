@@ -99,12 +99,12 @@ public class CommandeServiceImpl implements CommandeService {
         if(commande.getStatutCommande().equals(StatutCommande.LIVREE)){
             throw new IllegalArgumentException("This commande is already delivered");
         }
-        commande.setStatutCommande(StatutCommande.LIVREE);
         List<StockResponseDTO> stockResponseDTOList =  stockService.createStockLotsAndMouvement(commande.getDetailsCommandes());
         Commande savedCommande = commandeRepository.save(commande);
         Map<String , Object> responseDtoMap = new HashMap<>();
         responseDtoMap.put("Stock list",stockResponseDTOList);
         responseDtoMap.put("Commande updated",mapper.toResponseDto(savedCommande));
+        commande.setStatutCommande(StatutCommande.LIVREE);
 
         return responseDtoMap;
     }
